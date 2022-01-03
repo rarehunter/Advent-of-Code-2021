@@ -13,76 +13,80 @@ public class Day4_Giant_Squid {
 
         try {
             Scanner sc = new Scanner(file);
-
-            // The first line of the input is all the numbers to be drawn
-            String numbers = sc.nextLine();
-            String[] splitNumbers = numbers.split(",");
-            int[] bingoNumbers = new int[splitNumbers.length];
-            for (int i = 0; i < splitNumbers.length; i++) {
-                bingoNumbers[i] = Integer.parseInt(splitNumbers[i]);
-            }
-
-            sc.nextLine(); // read off the next line which is an empty line
-
-            // Now, we have to create a list of 2D arrays in order to store all the bingo boards
             List<int[][]> boards = new ArrayList<>();
-            int[][] board = new int[BINGO_BOARD_SIZE][BINGO_BOARD_SIZE];
-            int boardIndex = 0;
+            List<Integer> bingoNumbers = new ArrayList<>();
 
-            while (sc.hasNextLine()) {
-                String line = sc.nextLine();
-                if (line.equals("")) {
-                    boards.add(board);
-                    board = new int[BINGO_BOARD_SIZE][BINGO_BOARD_SIZE];
-                    boardIndex = 0;
-                    continue;
-                } else {
-                    board[boardIndex] = new int[BINGO_BOARD_SIZE];
-                    String[] tokens = line.trim().split("\\s+");
+            processInput(sc, boards, bingoNumbers);
 
-                    board[boardIndex][0] = Integer.parseInt(tokens[0]);
-                    board[boardIndex][1] = Integer.parseInt(tokens[1]);
-                    board[boardIndex][2] = Integer.parseInt(tokens[2]);
-                    board[boardIndex][3] = Integer.parseInt(tokens[3]);
-                    board[boardIndex][4] = Integer.parseInt(tokens[4]);
-                    boardIndex++;
-                }
-            }
+            int part1 = part1(bingoNumbers, boards);
+            System.out.println("Part 1: " + part1);
 
-            // Add in the final board
-            boards.add(board);
-
-            //int winningScore = bingoWinningBoardScore(bingoNumbers, boards);
-            //System.out.println("The score of the first complete board is: " + winningScore);
-
-            int losingScore = bingoLosingBoardScore(bingoNumbers, boards);
-            System.out.println("The score of the last complete board is: " + losingScore);
+            int part2 = part2(bingoNumbers, boards);
+            System.out.println("Part 2: " + part2);
 
         } catch (IOException exception) {
             exception.printStackTrace();
         }
     }
 
+    private static void processInput(Scanner sc, List<int[][]> boards, List<Integer> bingoNumbers) {
+        // The first line of the input is all the numbers to be drawn
+        String numbers = sc.nextLine();
+        String[] splitNumbers = numbers.split(",");
+        for (int i = 0; i < splitNumbers.length; i++) {
+            bingoNumbers.add(Integer.parseInt(splitNumbers[i]));
+        }
+
+        sc.nextLine(); // read off the next line which is an empty line
+
+        // Now, we have populate a list of 2D arrays to store all the bingo boards
+        int[][] board = new int[BINGO_BOARD_SIZE][BINGO_BOARD_SIZE];
+        int boardIndex = 0;
+
+        while (sc.hasNextLine()) {
+            String line = sc.nextLine();
+            if (line.equals("")) {
+                boards.add(board);
+                board = new int[BINGO_BOARD_SIZE][BINGO_BOARD_SIZE];
+                boardIndex = 0;
+                continue;
+            } else {
+                board[boardIndex] = new int[BINGO_BOARD_SIZE];
+                String[] tokens = line.trim().split("\\s+");
+
+                board[boardIndex][0] = Integer.parseInt(tokens[0]);
+                board[boardIndex][1] = Integer.parseInt(tokens[1]);
+                board[boardIndex][2] = Integer.parseInt(tokens[2]);
+                board[boardIndex][3] = Integer.parseInt(tokens[3]);
+                board[boardIndex][4] = Integer.parseInt(tokens[4]);
+                boardIndex++;
+            }
+        }
+
+        // Add in the final board
+        boards.add(board);
+    }
+
     // Checks whether a given bingo board is complete by
-    // checking if any row is completely FILLED or if any column is completely filled.
+    // checking if any row is completely filled or if any column is completely filled.
     // Returns true if so or false otherwise.
     private static boolean isBoardComplete(int[][] board) {
         for (int i = 0; i < board.length; i++) {
             // Check if any of the rows are complete
             if (board[i][0] == FILLED &&
-                    board[i][1] == FILLED &&
-                    board[i][2] == FILLED &&
-                    board[i][3] == FILLED &&
-                    board[i][4] == FILLED) {
+                board[i][1] == FILLED &&
+                board[i][2] == FILLED &&
+                board[i][3] == FILLED &&
+                board[i][4] == FILLED) {
                 return true;
             }
 
             // Check if any of the cols are complete
             if (board[0][i] == FILLED &&
-                    board[1][i] == FILLED &&
-                    board[2][i] == FILLED &&
-                    board[3][i] == FILLED &&
-                    board[4][i] == FILLED) {
+                board[1][i] == FILLED &&
+                board[2][i] == FILLED &&
+                board[3][i] == FILLED &&
+                board[4][i] == FILLED) {
                 return true;
             }
         }
@@ -141,8 +145,12 @@ public class Day4_Giant_Squid {
         return unMarkedSum * number;
     }
 
-    // Part 1: Determines the score of the first bingo board to be complete
-    private static int bingoWinningBoardScore(int[] bingoNumbers, List<int[][]> boards) {
+    // Part 1: Determines the score of the first bingo board to be complete.
+    // Iterates through the list of bingo numbers and mark that number on each board in our list of boards.
+    // The first board to have either a row or column with all numbers marked wins. 
+    // The board score is calculated by finding the sum of all unmarked numbers on that board.
+    // Then, multiply that current bingo number.
+    private static int part1(List<Integer> bingoNumbers, List<int[][]> boards) {
         for (int number : bingoNumbers) {
             markBoards(boards, number);
             int completedBoard = checkForCompletedBoard(boards);
@@ -151,12 +159,13 @@ public class Day4_Giant_Squid {
             }
         }
 
-        return -1;
+        return 0; // If no board has won, just return 0 here.
     }
 
-    private static boolean allBoardsComplete(int[] completedBoards) {
-        for (int i = 0; i < completedBoards.length; i++) {
-            if (completedBoards[i] == 0) {
+    // Given the current state of all boards, if every board is marked true, then all boards are complete.
+    private static boolean allBoardsComplete(boolean[] boardStates) {
+        for (int i = 0; i < boardStates.length; i++) {
+            if (!boardStates[i]) {
                 return false;
             }
         }
@@ -164,18 +173,14 @@ public class Day4_Giant_Squid {
         return true;
     }
 
-    private static boolean isBoardAlreadyCompleted(int[] completedBoards, int boardIndex) {
-        return completedBoards[boardIndex] == 1 ? true : false;
-    }
-
-    // Given a list of boards and a list of already completedBoards,
+    // Given a list of boards and the current state of all boards,
     // checks whether any new boards are complete.
-    // If not, returns -1.
-    // If so, returns a list of the indices of newly completed boards.
-    private static List<Integer> checkForNewlyCompletedBoards(List<int[][]> boards, int[] completedBoards) {
+    // Returns a list of the indices of newly completed boards.
+    private static List<Integer> checkForNewlyCompletedBoards(List<int[][]> boards, boolean[] boardStates) {
         List<Integer> newlyCompletedBoards = new ArrayList<>();
         for (int i = 0; i < boards.size(); i++) {
-            if (!isBoardAlreadyCompleted(completedBoards, i) && isBoardComplete(boards.get(i))) {
+            // If the current board state is false and the board is now complete, it is considered newly complete.
+            if (!boardStates[i] && isBoardComplete(boards.get(i))) {
                 newlyCompletedBoards.add(i);
             }
         }
@@ -183,31 +188,40 @@ public class Day4_Giant_Squid {
         return newlyCompletedBoards;
     }
 
-    // Part 2: Determines the score of the last bingo board to be complete
-    private static int bingoLosingBoardScore(int[] bingoNumbers, List<int[][]> boards) {
-        int[] completedBoards = new int[boards.size()];
+    // Part 2: Determines the score of the last bingo board to be complete.
+    // Iterates through the list of bingo numbers and mark that number on each board in our list of boards.
+    // Keep track of a board completion state and after every bingo number, determine if any boards
+    // are newly complete. Repeat until all boards are complete. Find the last board to be completed
+    // and calculate its board score.
+    // Important things of note:
+    // 1) We assume that there is only one unique last board.
+    // 2) Multiple boards can be completed at the same time.
+    // 3) Not all boards may be complete before the list of bingo numbers runs out.
+    private static int part2(List<Integer> bingoNumbers, List<int[][]> boards) {
+        boolean[] boardStates = new boolean[boards.size()]; // A true means the board at index i is complete.
         int lastCompleteBoardIndex = -1;
-        int lastCompletionNumber = -1;
+        int lastBingoNumber = -1;
 
         for (int number : bingoNumbers) {
             markBoards(boards, number);
-            List<Integer> completedBoardIndices = checkForNewlyCompletedBoards(boards, completedBoards);
+            List<Integer> completedBoardIndices = checkForNewlyCompletedBoards(boards, boardStates);
             if (completedBoardIndices.size() > 0) {
-                // for now, we just assume that the last completed board is the first one in our list
+                // Here, we just assume that the last completed board is the first one in our list.
+                // We also assume that at the end of the bingo game, there will be only one unique last board.
                 lastCompleteBoardIndex = completedBoardIndices.get(0);
-                lastCompletionNumber = number;
+                lastBingoNumber = number;
 
                 // Mark completed boards
                 for (int newlyCompletedBoardIndex : completedBoardIndices) {
-                    completedBoards[newlyCompletedBoardIndex] = 1;
+                    boardStates[newlyCompletedBoardIndex] = true;
                 }
 
-                if (allBoardsComplete(completedBoards)) {
+                if (allBoardsComplete(boardStates)) {
                     break;
                 }
             }
         }
 
-        return calculateBoardScore(boards.get(lastCompleteBoardIndex), lastCompletionNumber);
+        return calculateBoardScore(boards.get(lastCompleteBoardIndex), lastBingoNumber);
     }
 }
