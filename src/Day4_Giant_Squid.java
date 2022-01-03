@@ -63,24 +63,6 @@ public class Day4_Giant_Squid {
         }
     }
 
-    private static void print2DArray(int[][] board) {
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                System.out.print(board[i][j]);
-                System.out.print(" ");
-            }
-            System.out.println();
-        }
-    }
-
-    private static void printArray(int[] array) {
-        for (int i = 0; i < array.length; i++) {
-            System.out.print(array[i]);
-            System.out.print(" ");
-        }
-        System.out.println();
-    }
-
     // Checks whether a given bingo board is complete by
     // checking if any row is completely FILLED or if any column is completely filled.
     // Returns true if so or false otherwise.
