@@ -4,35 +4,31 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
 public class Day3_Binary_Diagnostic {
-    private static final Integer LENGTH_OF_INPUT_BITS = 12;
-
     public static void main(String[] args) {
         File file = new File("./inputs/day3/day3.txt");
 
         try {
-            // Creating an object of BufferedReader class
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            //int powerConsumption = getSubmarinePowerConsumption(br);
-            //System.out.println("Submarine power consumption is: " + powerConsumption);
+            Scanner sc = new Scanner(file);
+            List<String> inputs = new ArrayList<>();
 
-            int lifeSupportRating = getSubmarineLifeSupportRating(br);
-            System.out.println("Submarine power consumption is: " + lifeSupportRating);
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                inputs.add(line);
+            }
+
+            int part1 = part1(inputs);
+            System.out.println("Part 1: " + part1);
+
+            int part2 = part2(inputs);
+            System.out.println("Part 2: " + part2);
 
         } catch (IOException exception) {
             exception.printStackTrace();
         }
-    }
-
-    private static List<String> readBufferedReaderIntoList(BufferedReader br) throws IOException {
-        List<String> inputList = new ArrayList<>();
-        String line;
-        while ((line = br.readLine()) != null) {
-            inputList.add(line);
-        }
-        return inputList;
     }
 
     // Given an integer array of 1s and 0s representing a binary number,
@@ -50,20 +46,7 @@ public class Day3_Binary_Diagnostic {
         return output;
     }
 
-    private static int convertStringOfBinaryToInteger(String binary) {
-        int output = 0;
-        char[] chars = binary.toCharArray();
-        for (int i = chars.length - 1; i >= 0; i--) {
-            if (chars[i] == '0') continue;
-            if (chars[i] == '1') {
-                output += (int)Math.pow(2, (chars.length - 1 - i));
-            }
-        }
-
-        return output;
-    }
-
-    // Given an integer array of 1s and 0s, flips the bits of that array
+    // Given an integer array of 1s and 0s, returns a new array where every bit is flipped.
     private static int[] flipBits(int[] array) {
         int[] flipped = new int[array.length];
         for (int i = 0; i < array.length; i++) {
@@ -74,18 +57,20 @@ public class Day3_Binary_Diagnostic {
         return flipped;
     }
 
-    // Part 1: Power consumption of the submarine is gamma rate * epsilon rate
+    // Part 1: Finds the most and least common bit in the corresponding positions of all numbers in the input.
     // Gamma rate is the binary number formed by the most common bit in each position
-    // Epsilon rate is the binary number formed by the least common bit in each position
-    private static int getSubmarinePowerConsumption(BufferedReader br) throws IOException {
-        int[] mostCommonBits = new int[LENGTH_OF_INPUT_BITS];
-        String inputBits;
+    // Epsilon rate is the binary number formed by the least common bit in each position.
+    // Power consumption of the submarine is the product of gamma rate and epsilon rate.
+    private static int part1(List<String> inputs) {
+        int binaryNumberLength = inputs.size() > 0 ? inputs.get(0).length() : 0;
+        int[] mostCommonBits = new int[binaryNumberLength];
 
-        // Iterate through each input bits string and for every '0', decrement the value stored
-        // in mostCommonBits and for every '1', increment the value stored in mostCommonBits
-        // At the end, if the value in each position is positive, the most common bit is 1.
-        // If the value in each position is negative, the most common bit is 0.
-        while((inputBits = br.readLine()) != null) {
+        // Approach: Iterate through each input bits string.
+        // Keep track of a value for each position of the input bits.
+        // For every '0', decrement the value. For every '1', increment the value.
+        // At the end, if the value is positive, the most common bit at that position is 1.
+        // If the value is negative, the most common bit at that position is 0.
+        for (String inputBits : inputs) {
             for (int i = 0; i < inputBits.length(); i++) {
                 char bit = inputBits.charAt(i);
                 if (bit == '0') {
@@ -111,6 +96,8 @@ public class Day3_Binary_Diagnostic {
         return gammaRate * epsilonRate;
     }
 
+    // Given a list of binary numbers as strings, keep elements in the list in which the bit at the
+    // given position is equivalent to the bit that we want to filter on.
     private static List<String> filterInputList(List<String> inputList, int consideringBit, char bitToFilterOn) {
         return inputList
                 .stream()
@@ -118,65 +105,110 @@ public class Day3_Binary_Diagnostic {
                 .collect(Collectors.toList());
     }
 
-    private static int calculateOxygenGeneratorRating(List<String> inputList) {
+    // Given a list of input binary numbers, return the decimal number remaining by
+    // determine the most common bit (0 or 1) in each bit position (from left to right),
+    // and keeping numbers with that bit in that position. If 0 and 1 are equally common,
+    // keep values with a 1 in the position being considered.
+    private static int calculateOxygenGeneratorRating(List<String> inputs) {
+        int binaryNumberLength = inputs.size() > 0 ? inputs.get(0).length() : 0;
         int mostCommonBit = 0;
-        for (int consideringBit = 0; consideringBit < LENGTH_OF_INPUT_BITS; consideringBit++) {
+
+        // Iterate through each bit position.
+        for (int consideringBit = 0; consideringBit < binaryNumberLength; consideringBit++) {
             mostCommonBit = 0;
-            for (int i = 0; i < inputList.size(); i++) {
-                String bits = inputList.get(i);
+
+            // Determine the most common bit in that bit position.
+            // A negative number means the most common bit is 0.
+            // A positive number means the most common bit is 1.
+            for (int i = 0; i < inputs.size(); i++) {
+                String bits = inputs.get(i);
                 if (bits.charAt(consideringBit) == '0') mostCommonBit--;
                 if (bits.charAt(consideringBit) == '1') mostCommonBit++;
             }
 
+            // If 1 is the most common bit, keep values with a '1' in the bit position.
+            // If 0 is the most common bit, keep values with a '0' in the bit position.
+            // If 0 and 1 are equally common, keep values with a '1' in the bit position.
             if (mostCommonBit == 0) {
-                inputList = filterInputList(inputList, consideringBit, '1');
+                inputs = filterInputList(inputs, consideringBit, '1');
             } else if (mostCommonBit > 0){
-                inputList = filterInputList(inputList, consideringBit, '1');
+                inputs = filterInputList(inputs, consideringBit, '1');
             } else if (mostCommonBit < 0) {
-                inputList = filterInputList(inputList, consideringBit, '0');
+                inputs = filterInputList(inputs, consideringBit, '0');
             }
 
-            if (inputList.size() == 1)
-                return convertStringOfBinaryToInteger(inputList.get(0));
+            // If we only have one number remaining, we've found our OGR.
+            if (inputs.size() == 1)
+                return Integer.parseInt(inputs.get(0), 2);
         }
 
-        return convertStringOfBinaryToInteger(inputList.get(0));
+        return Integer.parseInt(inputs.get(0), 2);
     }
 
-    private static int calculateCO2ScrubberRating(List<String> inputList) {
+    // Given a list of input binary numbers, return the decimal number remaining by
+    // determine the least common bit (0 or 1) in each bit position (from left to right),
+    // and keeping numbers with that bit in that position. If 0 and 1 are equally common,
+    // keep values with a 0 in the position being considered.
+    private static int calculateCO2ScrubberRating(List<String> inputs) {
+        int binaryNumberLength = inputs.size() > 0 ? inputs.get(0).length() : 0;
         int mostCommonBit = 0;
-        for (int consideringBit = 0; consideringBit < LENGTH_OF_INPUT_BITS; consideringBit++) {
+
+        // Iterate through each bit position.
+        for (int consideringBit = 0; consideringBit < binaryNumberLength; consideringBit++) {
             mostCommonBit = 0;
-            for (int i = 0; i < inputList.size(); i++) {
-                String bits = inputList.get(i);
+
+            // Determine the most common bit in that bit position.
+            // A negative number means the most common bit is 0.
+            // A positive number means the most common bit is 1.
+            for (int i = 0; i < inputs.size(); i++) {
+                String bits = inputs.get(i);
                 if (bits.charAt(consideringBit) == '0') mostCommonBit--;
                 if (bits.charAt(consideringBit) == '1') mostCommonBit++;
             }
 
+            // If 1 is the most common bit, keep values with a '0' in the bit position.
+            // If 0 is the most common bit, keep values with a '1' in the bit position.
+            // If 0 and 1 are equally common, keep values with a '0' in the bit position.
             if (mostCommonBit == 0) {
-                inputList = filterInputList(inputList, consideringBit, '0');
+                inputs = filterInputList(inputs, consideringBit, '0');
             } else if (mostCommonBit > 0){
-                inputList = filterInputList(inputList, consideringBit, '0');
+                inputs = filterInputList(inputs, consideringBit, '0');
             } else if (mostCommonBit < 0) {
-                inputList = filterInputList(inputList, consideringBit, '1');
+                inputs = filterInputList(inputs, consideringBit, '1');
             }
 
-            if (inputList.size() == 1)
-                return convertStringOfBinaryToInteger(inputList.get(0));
+            if (inputs.size() == 1)
+                return Integer.parseInt(inputs.get(0), 2);
         }
 
-        return convertStringOfBinaryToInteger(inputList.get(0));
+        return Integer.parseInt(inputs.get(0), 2);
     }
 
-    // Part 2: Life support rating (LSR) is the oxygen generator rating (OGR) * CO2 scrubber rating (CSR)
-    // OGR is the number gotten by incrementally filtering out numbers whose bits from left to right
-    // are the most common. CSR is the number gotten by incrementally filtering out numbers whose
-    // bits from left to right are the least common.
-    private static int getSubmarineLifeSupportRating(BufferedReader br) throws IOException {
-        List<String> inputList = readBufferedReaderIntoList(br);
-
-        int ogr =  calculateOxygenGeneratorRating(inputList);
-        int csr = calculateCO2ScrubberRating(inputList);
+    // Part 2: Calculate both the OGR and CSR.
+    // To calculate OGR, determine the most common bit (0 or 1) in the current bit position,
+    // and keep only numbers with that bit in that position. If 0 and 1 are equally common,
+    // keep values with a 1 in the position being considered.
+    // To calculate CSR, determine the least common bit in the current bit position and keep only numbers with that
+    // bit in that position. If 0 and 1 are equally common, keep values with a 0 in the position being considered.
+    // In other words, for OGR, we are incrementally filtering out binary numbers whose bits (from left to right)
+    // are the most common. For CSR, we are incrementally filtering out binary numbers whose bits from left to right
+    // are the least common.
+    // Return the life support rating of the submarine which is the product of the OGR and CSR.
+    private static int part2(List<String> inputs) {
+        int ogr =  calculateOxygenGeneratorRating(inputs);
+        int csr = calculateCO2ScrubberRating(inputs);
         return ogr * csr;
     }
+
+    // Further improvements:
+    // 1) In part 1, once we have an integer that represents the binary number formed by
+    // the most common bit in each position, it seems silly to flip all the bits of an int array and recalculate
+    // an integer for the least common bit. There is a way to use some bit shifting to generate a bit mask and XOR
+    // operations to get the decimal number that is the bitwise inversion of the first number.
+    //
+    // 2) In part 2, the code for calculating the OGR and CSR is very similar even though
+    // they both filter out the input list in different ways. The current algorithm results in a lot of repeated
+    // work: one pass is to repeatedly calculating the most common bits and filtering the list based off of that.
+    // Another pass is performed to repeatedly calculating the least common bits and filtering the list based off of
+    // that. There should be a way to elegantly combine this work into a single pass instead of two.
 }

@@ -1,34 +1,43 @@
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import java.util.Scanner;
 
 public class Day1_Sonar_Sweep {
     public static void main(String[] args) {
+        File file = new File("./inputs/day1/day1.txt");
+
         try {
-            Stream<String> lines = Files.lines(Path.of("./inputs/day1/day1.txt"));
-            IntStream intStream = lines.mapToInt(num -> Integer.parseInt(num));
-            Iterable<Integer> iterable = intStream::iterator;
+            Scanner sc = new Scanner(file);
 
-            //int partOneCount = getDepthMeasurementIncreases(iterable);
-            int partTwoCount = getDepthMeasurementIncreasesUsingSlidingWindow(intStream);
+            List<Integer> depths = new ArrayList<>();
 
-            //System.out.println("Number of times depth measurement increases: " + partOneCount);
-            System.out.println("Number of times depth measurement increases using three-measurement sliding window: " + partTwoCount);
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                depths.add(Integer.parseInt(line));
+            }
+
+            int part1 = part1(depths);
+            System.out.println("Part 1: " + part1);
+
+            int part2 = part2(depths);
+            System.out.println("Part 2: " + part2);
 
         } catch (IOException exception) {
             exception.printStackTrace();
         }
     }
 
-    // Part 1
-    private static int getDepthMeasurementIncreases(Iterable<Integer> iterable) {
+    // Part 1: Count the number of times a depth measurement increases from the previous measurement.
+    // There is no measurement before the first measurement.
+    // Iterate through every depth in the list, storing the previous depth seen. If the current depth
+    // is greater than the previous depth, increase our count.
+    private static int part1(List<Integer> depths) {
         int depthMeasurementIncreases = 0;
         int previousDepth = Integer.MAX_VALUE;
 
-        for (Integer depth : iterable) {
+        for (Integer depth : depths) {
             if (depth > previousDepth) {
                 depthMeasurementIncreases++;
             }
@@ -39,14 +48,15 @@ public class Day1_Sonar_Sweep {
         return depthMeasurementIncreases;
     }
 
-    // Part 2
-    private static int getDepthMeasurementIncreasesUsingSlidingWindow(IntStream intStream) {
-        List<Integer> depths = intStream.boxed().toList();
+    // Part 2: Using a three-depth sliding window sum, count how many sums are larger than the previous sum.
+    // Iterate through consecutive triplet of depths, summing them up and storing it. If the current sum
+    // is greater than the previous sum, increase our count.
+    private static int part2(List<Integer> depths) {
         int depthMeasurementIncreases = 0;
         int previousSlidingWindowSum = Integer.MAX_VALUE;
 
         for (int i = 2; i < depths.size(); i++) {
-            int slidingWindowSum = depths.get(i) + depths.get(i - 1) + depths.get(i - 2);
+            int slidingWindowSum = depths.get(i) + depths.get(i-1) + depths.get(i-2);
 
             if (slidingWindowSum > previousSlidingWindowSum) {
                 depthMeasurementIncreases++;

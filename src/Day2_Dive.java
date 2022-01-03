@@ -2,6 +2,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 public class Day2_Dive {
     private static final String FORWARD = "forward";
@@ -12,57 +15,71 @@ public class Day2_Dive {
         File file = new File("./inputs/day2/day2.txt");
 
         try {
-            // Creating an object of BufferedReader class
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            //int multipliedSubmarinePosition = submarinePosition(br);
-            int multipliedSubmarinePosition = submarinePositionWithAim(br);
+            Scanner sc = new Scanner(file);
+            List<String> commands = new ArrayList<>();
 
-            System.out.println("Submarine has multiplied position: " + multipliedSubmarinePosition);
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                commands.add(line);
+            }
+
+            int part1 = part1(commands);
+            System.out.println("Part 1: " + part1);
+
+            int part2 = part2(commands);
+            System.out.println("Part 2: " + part2);
 
         } catch (IOException exception) {
             exception.printStackTrace();
         }
     }
 
-    // Parse an instruction that looks like "forward 8" into the string "forward" and the string "8"
-    private static String[] parseInput(String instruction) {
-        return instruction.split(" ");
-    }
-
-    // Part 1
-    private static int submarinePosition(BufferedReader br) throws IOException {
-        String instruction;
+    // Part 1: Iterates through the list of commands and calculates the final horizontal position
+    // and final depth of the submarine.
+    // The command: "forward X" increases the horizontal position by X units.
+    // The command: "down X" increases the depth by X units.
+    // The command: "up X" decreases the depth by X units.
+    // Returns the product of the final horizontal position and the final depth.
+    private static int part1(List<String> commands) {
         int depth = 0;
         int horizontalPosition = 0;
 
-        while((instruction = br.readLine()) != null) {
-            String[] tokens = parseInput(instruction);
+        for (String command : commands) {
+            String[] tokens = command.split(" ");
             String direction = tokens[0];
             int value = Integer.parseInt(tokens[1]);
 
             switch(direction) {
-                case FORWARD: horizontalPosition += value;
+                case FORWARD:
+                    horizontalPosition += value;
                     break;
-                case UP: depth -= value;
+                case UP:
+                    depth -= value;
                     break;
-                case DOWN: depth += value;
+                case DOWN:
+                    depth += value;
                     break;
-                default: break;
+                default:
+                    break;
             }
         }
 
         return depth * horizontalPosition;
     }
 
-    // Part 2
-    private static int submarinePositionWithAim(BufferedReader br) throws IOException {
-        String instruction;
+    // Part 2: Iterates through the list of commands and calculates the final horizontal position
+    // and final depth of the submarine.
+    // The command: "down X" increases aim by X units.
+    // The command: "up X" decreases aim by X units.
+    // The command: "forward X" increases horizontal position by X units and increases depth by aim multiplied by X.
+    // Returns the product of the final horizontal position and the final depth.
+    private static int part2(List<String> commands) {
         int depth = 0;
         int horizontalPosition = 0;
         int aim = 0;
 
-        while((instruction = br.readLine()) != null) {
-            String[] tokens = parseInput(instruction);
+        for (String command : commands) {
+            String[] tokens = command.split(" ");
             String direction = tokens[0];
             int value = Integer.parseInt(tokens[1]);
 
@@ -71,9 +88,11 @@ public class Day2_Dive {
                     horizontalPosition += value;
                     depth += aim * value;
                     break;
-                case UP: aim -= value;
+                case UP:
+                    aim -= value;
                     break;
-                case DOWN: aim += value;
+                case DOWN:
+                    aim += value;
                     break;
                 default: break;
             }
@@ -81,5 +100,4 @@ public class Day2_Dive {
 
         return depth * horizontalPosition;
     }
-
 }
