@@ -9,46 +9,47 @@ public class Day6_Lanternfish {
 
         try {
             Scanner sc = new Scanner(file);
-            List<BitSet> fishAges = new ArrayList<>();
 
             String line = "";
             while(sc.hasNextLine()) {
                 line = sc.nextLine();
             }
 
+            List<Integer> fishAges = new ArrayList<>(); // List for tracking each individual fish, used in part 1
             String[] tokens = line.split(",");
-            /* For Part 1
             for (String age : tokens) {
                 fishAges.add(Integer.parseInt(age));
             }
-            */
 
-            // For Part 2
-            Map<Integer, Long> fishTypes = new HashMap<>();
+            Map<Integer, Long> fishTypes = new HashMap<>(); // Map for storing "types" of fish, used in part 2
 
+            // Populate the map with 8 "types" of fish representing the numbers of days they have left.
             for (int i = 0; i <= 8; i++) {
                 fishTypes.put(i, (long)0);
             }
 
+            // Iterate through the starting input and count the number of fish per "type" (days they have left)
             for (String age: tokens) {
                 int fishAge = Integer.parseInt(age);
-                long curr = fishTypes.get(fishAge);
-                fishTypes.put(fishAge, curr + 1);
+                fishTypes.put(fishAge, fishTypes.get(fishAge) + 1);
             }
 
-            int day = 256;
-            //int numLanternFish = lanternfishModel(fishAges, day);
-            //System.out.println("After " + day + " days, there are " + numLanternFish + " lantern fish.");
+            int part1 = part1(fishAges, 80);
+            System.out.println("Part 1: " + part1);
 
-            long numLanternFish = lanternfishModelLarge(fishTypes, day);
-            System.out.println("After " + day + " days, there are " + numLanternFish + " lantern fish.");
+            long part2 = part2(fishTypes, 256);
+            System.out.println("Part 2: " + part2);
         } catch (IOException exception) {
             exception.printStackTrace();
         }
     }
 
-    // Part 1: Starting with the list of ages, returns the number of lantern fish present after a given number of days
-    private static int lanternfishModel(List<Integer> ages, int day) {
+    // Part 1: Starting with the list of ages,
+    // returns the number of lantern fish present after a given number of days.
+    // Appends new fish to the end of the list, thereby tracking each individual
+    // fish as its days decrease and new fish are added.
+    // Return the size of the list as that is the number of fish present after n days.
+    private static int part1(List<Integer> ages, int day) {
         for (int i = 0; i < day; i++) {
             int newFish = 0;
             for (int f = 0; f < ages.size(); f++) {
@@ -74,7 +75,7 @@ public class Day6_Lanternfish {
     // there is no need to track each individual fish but rather, just the number of fishes per "type".
     // We create a dictionary mapping a fish with 0 day remaining, 1 day remaining, ... ,8 days remaining
     // to the number of fish in each category.
-    private static long lanternfishModelLarge(Map<Integer, Long> fishTypes, int day) {
+    private static long part2(Map<Integer, Long> fishTypes, int day) {
         for (int i = 0; i < day; i++) {
             long fishAtZero = fishTypes.get(0);
 
@@ -91,6 +92,7 @@ public class Day6_Lanternfish {
             fishTypes.put(8, fishAtZero);
         }
 
+        // Sum up each type of fish
         long sum = 0;
         for (Integer fishType : fishTypes.keySet()) {
             sum += fishTypes.get(fishType);

@@ -14,13 +14,12 @@ public class Day5_Hydrothermal_Venture {
             int largestX = 0;
             int largestY = 0;
 
-            // A dictionary of coordinates: (x,y) -> (a,b)
             List<LineSegment> lineSegments = new ArrayList<>();
 
             while(sc.hasNextLine()) {
                 String line = sc.nextLine();
 
-                // Extract out the relevant coordinates from the input data
+                // Extract out the relevant points from the input data
                 String[] bothPoints = line.split(" -> ");
                 String[] firstPoint = bothPoints[0].split(",");
                 String[] secondPoint = bothPoints[1].split(",");
