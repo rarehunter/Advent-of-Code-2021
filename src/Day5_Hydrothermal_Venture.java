@@ -15,7 +15,7 @@ public class Day5_Hydrothermal_Venture {
             int largestY = 0;
 
             // A dictionary of coordinates: (x,y) -> (a,b)
-            Map<Point, List<Point>> coordinates = new HashMap<>();
+            List<LineSegment> lineSegments = new ArrayList<>();
 
             while(sc.hasNextLine()) {
                 String line = sc.nextLine();
@@ -31,13 +31,7 @@ public class Day5_Hydrothermal_Venture {
                 Point p1 = new Point(x1, y1);
                 Point p2 = new Point(x2, y2);
 
-                if (coordinates.containsKey(p1)) {
-                    coordinates.get(p1).add(p2);
-                } else {
-                    List<Point> newPoints = new ArrayList<>();
-                    newPoints.add(p2);
-                    coordinates.put(p1, newPoints);
-                }
+                lineSegments.add(new LineSegment(p1, p2));
 
                 // Update the largest x and y
                 if (x1 > largestX) largestX = x1;
@@ -49,63 +43,55 @@ public class Day5_Hydrothermal_Venture {
             // Construct the 2d array of the coordinate system
             int[][] grid = new int[largestY + 1][largestX + 1];
 
-            //int numberOfAtLeastTwoOverlapPoints = numberOfAtLeastTwoOverlapPoints(coordinates, grid);
-            //System.out.println("Number of points with at least two overlapping lines: " + numberOfAtLeastTwoOverlapPoints);
+            int part1 = part1(lineSegments, grid);
+            System.out.println("Part 1: " + part1);
 
-            int numberOfAtLeastTwoOverlapPointsDiagonal = numberOfAtLeastTwoOverlapPointsWithDiagonals(coordinates, grid);
-            System.out.println("Number of points with at least two overlapping lines including diagonals: " + numberOfAtLeastTwoOverlapPointsDiagonal);
+            clearGrid(grid);
+
+            int part2 = part2(lineSegments, grid);
+            System.out.println("Part 2: " + part2);
 
         } catch (IOException exception) {
             exception.printStackTrace();
         }
     }
 
-    private static void print2DArray(int[][] board) {
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                System.out.print(board[i][j]);
-                System.out.print(" ");
+    // Given a 2d integer array, sets all values to 0.
+    private static void clearGrid(int[][] grid) {
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[i].length; j++) {
+                grid[i][j] = 0;
             }
-            System.out.println();
         }
     }
 
+    // Given a grid and two points representing a vertical line, plot the vertical line
+    // in the grid by incrementing all the cells corresponding to the points of the line by one.
     private static void plotVerticalLine(int[][] grid, Point p1, Point p2) {
-        int start, end, constantX = p1.x;
-        if (p1.y < p2.y) {
-            start = p1.y;
-            end = p2.y;
-        } else {
-            start = p2.y;
-            end = p1.y;
-        }
+        int start = Math.min(p1.y, p2.y);
+        int end = Math.max(p1.y, p2.y);
 
         for (int i = start; i <= end; i++) {
-            grid[i][constantX] += 1;
+            grid[i][p1.x] += 1; // For vertical lines, x is held constant
         }
     }
 
+    // Given a grid and two points representing a horizontal line, plot the horizontal line
+    // in the grid by incrementing all the cells corresponding to the points of the line by one.
     private static void plotHorizontalLine(int[][] grid, Point p1, Point p2) {
-        int start, end, constantY = p1.y;
-
-        if (p1.x < p2.x) {
-            start = p1.x;
-            end = p2.x;
-        } else {
-            start = p2.x;
-            end = p1.x;
-        }
+        int start = Math.min(p1.x, p2.x);
+        int end = Math.max(p1.x, p2.x);
 
         for (int i = start; i <= end; i++) {
-            grid[constantY][i] += 1;
+            grid[p1.y][i] += 1; // For horizontal lines, y is held constant
         }
     }
 
+    // Given a grid and two points representing a diagonal line with a 45-degree angle, plot
+    // the diagonal line in the grid by incrementing all cells corresponding to the points of the line by one.
     private static void plotDiagonalLine(int[][] grid, Point p1, Point p2) {
-        // Determine if the diagonal line is going upwards or going downwards
-
         // Line is sloping downwards (both x and y move in the same direction)
-        // and first point is smaller than second point: (1,1) => (3,3)
+        // and first point is smaller than second point: e.g. (1,1) => (3,3)
         if (p1.x < p2.x && p1.y < p2.y) {
             for (int i = p1.x, j = p1.y; i <= p2.x && j <= p2.y; i++, j++) {
                 grid[j][i] += 1;
@@ -137,6 +123,8 @@ public class Day5_Hydrothermal_Venture {
         }
     }
 
+    // Given a 2D integer array, counts the number of times a number greater than or equal to 2 appears.
+    // In other words, counts the number of points at which at least two lines overlap.
     private static int countAtLeastTwoOverlaps(int[][] grid) {
         int atLeastTwoOverlaps = 0;
         for (int i = 0; i < grid.length; i++) {
@@ -150,32 +138,37 @@ public class Day5_Hydrothermal_Venture {
         return atLeastTwoOverlaps;
     }
 
+    // Returns true if the two given points form a horizontal line (x values differ and y values are the same)
+    private static boolean isHorizontalLine(Point p1, Point p2) {
+        return p1.x != p2.x && p1.y == p2.y;
+    }
+
+    // Returns true if the two given points form a vertical line (y values differ and x values are the same)
+    private static boolean isVerticalLine(Point p1, Point p2) {
+        return p1.y != p2.y && p1.x == p2.x;
+    }
+
+    // Returns true if the two given points form a diagonal line (y values differ and x values differ).
+    // Note: The problem allows us the luxury of assuming that all diagonal lines will be at 45 degree angles.
+    private static boolean isDiagonalLine(Point p1, Point p2) {
+        return p1.y != p2.y && p1.x != p2.x;
+    }
+
     // Part 1: Given a map of line segments, plots them on the given grid using integers
     // denoting how many segments overlap at any given point. Returns the number of at least two overlapping points
     // Note: Here, we only consider vertical or horizontal lines.
-    private static int numberOfAtLeastTwoOverlapPoints(Map<Point, List<Point>> coordinates, int[][] grid) {
-        for (Point p1 : coordinates.keySet()) {
-            List<Point> ends = coordinates.get(p1);
+    private static int part1(List<LineSegment> lineSegments, int[][] grid) {
+        for (LineSegment segment : lineSegments) {
+            Point p1 = segment.p1;
+            Point p2 = segment.p2;
 
-            for (Point p2: ends) {
-                // First, let's check that we're only considering horizontal or vertical lines:
-                // where x1 = x2 or y1 = y2
-                if (p1.x == p2.x || p1.y == p2.y) {
-                    // Vertical line
-                    if (p1.x == p2.x && p1.y != p2.y) {
-                        plotVerticalLine(grid, p1, p2);
-                    }
-
-                    // Horizontal line
-                    if (p1.y == p2.y && p1.x != p2.x) {
-                        plotHorizontalLine(grid, p1, p2);
-                    }
-
-                    // Single point
-                    if (p1.y == p2.y && p1.x == p2.x) {
-                        grid[p1.y][p1.x] += 1;
-                    }
-                }
+            // For this part, we only consider vertical or horizontal lines
+            if (isHorizontalLine(p1, p2)) {
+                plotHorizontalLine(grid, p1, p2);
+            } else if (isVerticalLine(p1, p2)) {
+                plotVerticalLine(grid, p1, p2);
+            } else if (p1.x == p2.x && p1.y == p2.y) { // It's possible that both points are the same.
+                grid[p1.y][p1.x] += 1;
             }
         }
 
@@ -186,34 +179,35 @@ public class Day5_Hydrothermal_Venture {
     // Part 2: Given a map of line segments, plots them on the given grid using integers
     // denoting how many segments overlap at any given point. Returns the number of at least two overlapping points
     // Note: Here, we include vertical, horizontal, and diagonal lines at a 45 degree angle.
-    private static int numberOfAtLeastTwoOverlapPointsWithDiagonals(Map<Point, List<Point>> coordinates, int[][] grid) {
-        for (Point p1 : coordinates.keySet()) {
-            List<Point> ends = coordinates.get(p1);
+    private static int part2(List<LineSegment> lineSegments, int[][] grid) {
+        for (LineSegment segment : lineSegments) {
+            Point p1 = segment.p1;
+            Point p2 = segment.p2;
 
-            for (Point p2: ends) {
-                // Vertical line
-                if (p1.x == p2.x && p1.y != p2.y) {
-                    plotVerticalLine(grid, p1, p2);
-                }
-
-                // Horizontal line
-                if (p1.y == p2.y && p1.x != p2.x) {
-                    plotHorizontalLine(grid, p1, p2);
-                }
-
-                // Diagonal line
-                if (p1.x != p2.x && p1.y != p2.y) {
-                    plotDiagonalLine(grid, p1, p2);
-                }
-
-                // Single point
-                if (p1.y == p2.y && p1.x == p2.x) {
-                    grid[p1.y][p1.x] += 1;
-                }
+            // For this part, we only consider vertical or horizontal lines
+            if (isHorizontalLine(p1, p2)) {
+                plotHorizontalLine(grid, p1, p2);
+            } else if (isVerticalLine(p1, p2)) {
+                plotVerticalLine(grid, p1, p2);
+            } else if (isDiagonalLine(p1, p2)) {
+                plotDiagonalLine(grid, p1, p2);
+            } else if (p1.x == p2.x && p1.y == p2.y) { // It's possible that both points are the same.
+                grid[p1.y][p1.x] += 1;
             }
         }
 
         int atLeastTwoOverlaps = countAtLeastTwoOverlaps(grid);
         return atLeastTwoOverlaps;
+    }
+
+    // Class representing a line segment formed by two points.
+    static class LineSegment {
+        Point p1;
+        Point p2;
+
+        public LineSegment(Point p1, Point p2) {
+            this.p1 = p1;
+            this.p2 = p2;
+        }
     }
 }
