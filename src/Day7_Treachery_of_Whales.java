@@ -20,19 +20,26 @@ public class Day7_Treachery_of_Whales {
                 crabPositions.add(Integer.parseInt(token));
             }
 
-            //int minimumFuel = getMinimumFuelForCrabAlignmentMedian(crabPositions);
-            int minimumFuel = getMinimumFuelForCrabAlignmentMean(crabPositions);
-            System.out.println("The minimum fuel needed to align the crabs is: " + minimumFuel);
+            int part1 = part1(crabPositions);
+            System.out.println("Part 1: " + part1);
+
+            int part2 = part2(crabPositions);
+            System.out.println("Part 2: "  + part2);
 
         } catch (IOException exception) {
             exception.printStackTrace();
         }
     }
 
-    // Part 1: Find the median of the list of crab positions.
-    // The distance between the median and the rest of the values is less than the distance from any other point.
-    private static int getMinimumFuelForCrabAlignmentMedian(List<Integer> crabPositions) {
+    // Part 1: Given a list of horizontal positions, find the horizontal position that minimizes
+    // the distances that all the crabs have to travel and return the total fuel consumption to
+    // travel that minimal distance. Each movement costs one fuel.
+    // This essentially boils down to finding the median of the list of crab positions because
+    // the distance between the median and the rest of the values is less than the distance from any other point.
+    private static int part1(List<Integer> crabPositions) {
         Collections.sort(crabPositions);
+
+        // Calculate the median
         int median = 0;
         int size = crabPositions.size();
         if (size % 2 == 1) {
@@ -41,6 +48,7 @@ public class Day7_Treachery_of_Whales {
             median = (crabPositions.get(size / 2) + crabPositions.get((size / 2) - 1))/2;
         }
 
+        // Find the total fuel consumption needed for each crab to move to the median.
         int minFuel = 0;
         for (Integer pos : crabPositions) {
             minFuel += Math.abs(pos - median);
@@ -49,26 +57,41 @@ public class Day7_Treachery_of_Whales {
         return minFuel;
     }
 
-    private static int calculateMinimumFuelFromPosition(List<Integer> crabPositions, int position) {
-        int minFuel = 0;
-        for (Integer crabPos : crabPositions) {
-            int distance = Math.abs(crabPos - position);
-            // sum of numbers from 1,...,n = (n * (n+1)) / 2
-            minFuel += (distance * (distance + 1)) / 2;
-        }
 
-        return minFuel;
-    }
-
-    // Part 2: Find the mean of the list of crab positions.
-    private static int getMinimumFuelForCrabAlignmentMean(List<Integer> crabPositions) {
+    // Part 2: Given a list of horizontal positions, find the horizontal position that minimizes the
+    // distances that all crabs have to travel and return the total fuel consumption to travel that minimal distance.
+    // Each change of 1 step in horizontal position costs 1 more unit of fuel than the last.
+    // The intuition here leads us to consider the mean as outliers in the positions can have greater impact
+    // on total fuel cost (than in part 1). Finding the mean will nearly minimize the sum of square distances,
+    // and the fuel functions are triangular which is O(n^2) (a la Gauss).
+    // However, the exact mean is not entirely sufficient. Since we are finding the point at which the derivative
+    // of the triangular number is equal 0 of which finding the mean gets us close, there is another term which must
+    // be accounted for and therefore, we can find the true solution by not blindly considering the mean but two
+    // points "around" it, namely: the floor and ceiling functions of the mean. We return the minimum fuel found
+    // after considering those two points.
+    private static int part2(List<Integer> crabPositions) {
+        // Find the mean
         long sum = 0;
         for (Integer pos : crabPositions) {
             sum += pos;
         }
-        int mean = (int)Math.rint(sum / (crabPositions.size()));
 
-        int minFuel = calculateMinimumFuelFromPosition(crabPositions, mean);
-        return minFuel;
+        double mean = (double)sum / crabPositions.size();
+
+        // Test out two potential locations for minimum fuel values
+        int potentialLocation1 = (int)Math.floor(mean);
+        int potentialLocation2 = (int)Math.ceil(mean);
+
+        // Find the total fuel consumption needed for each crab to move to the potential locations.
+        int minFuel1 = 0;
+        int minFuel2 = 0;
+        for (Integer crabPos : crabPositions) {
+            int distance1 = Math.abs(crabPos - potentialLocation1);
+            int distance2 = Math.abs(crabPos - potentialLocation2);
+            minFuel1 += (distance1 * (distance1 + 1)) / 2;
+            minFuel2 += (distance2 * (distance2 + 1)) / 2;
+        }
+
+        return Math.min(minFuel1, minFuel2);
     }
 }
