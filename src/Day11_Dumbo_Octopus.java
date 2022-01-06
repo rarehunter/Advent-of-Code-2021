@@ -38,16 +38,6 @@ public class Day11_Dumbo_Octopus {
         }
     }
 
-    private static void print2DArray(int[][] board) {
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                System.out.print(board[i][j]);
-                System.out.print(" ");
-            }
-            System.out.println();
-        }
-    }
-
     // Increases all energy levels of octopus in the grid by 1 and
     // returns a queue of the points in which the octopus level is greater than 9
     private static List<Point> increaseEnergyLevelByOne(int[][] grid) {
