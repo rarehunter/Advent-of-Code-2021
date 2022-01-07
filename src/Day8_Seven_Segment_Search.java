@@ -1,84 +1,141 @@
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Day8_Seven_Segment_Search {
-    private static final int NUM_SEGMENTS_ONE = 2;
-    private static final int NUM_SEGMENTS_FOUR = 4;
-    private static final int NUM_SEGMENTS_SEVEN = 3;
-    private static final int NUM_SEGMENTS_EIGHT = 7;
-    private static final int NUM_SEGMENTS_OTHER_FIVE = 5;
-    private static final int NUM_SEGMENTS_OTHER_SIX = 6;
+    // The number of segments it takes to form a digit
+    private static final int DIGIT_ONE_SEGMENTS = 2;
+    private static final int DIGIT_FOUR_SEGMENTS = 4;
+    private static final int DIGIT_SEVEN_SEGMENTS = 3;
+    private static final int DIGIT_EIGHT_SEGMENTS = 7;
+
+    private static final int UNIQUE_SIGNAL_PATTERNS = 10;
+    private static final int OUTPUT_VALUE_DIGITS = 4;
 
     public static void main(String[] args) {
         File file = new File("./inputs/day8/day8.txt");
-        Map<Integer, List<String[]>> map = new HashMap<>();
-        List<String> signalPatterns = new ArrayList<>();
-        List<String> outputValues = new ArrayList<>();
 
         try {
             Scanner sc = new Scanner(file);
+            List<Entry> entries = new ArrayList<>();
 
-            // For part 1
-            /*
-            while(sc.hasNextLine()) {
-                String line = sc.nextLine();
-                String[] tokens = line.split("\\|");
-                String[] leftSide = tokens[0].trim().split(" ");
-                String[] rightSide = tokens[1].trim().split(" ");
-
-                for (String leftString : leftSide) {
-                    signalPatterns.add(leftString);
-                }
-
-                for (String rightString : rightSide) {
-                    outputValues.add(rightString);
-                }
-            }
-            */
-
-            // For part 2
-            int i = 0;
             while (sc.hasNextLine()) {
                 String line = sc.nextLine();
-                String[] tokens = line.split("\\|");
-                String[] leftSide = tokens[0].trim().split(" ");
-                String[] rightSide = tokens[1].trim().split(" ");
+                String[] tokens = line.split(" ");
+                List<String> signalPatterns = new ArrayList<>();
+                List<String> outputValues = new ArrayList<>();
 
-                List<String[]> entries = new ArrayList<>();
-                entries.add(leftSide);
-                entries.add(rightSide);
-                map.put(i, entries);
+                // The first tokens are the ten signal patterns.
+                for (int i = 0; i < UNIQUE_SIGNAL_PATTERNS; i++) {
+                    signalPatterns.add(tokens[i]);
+                }
 
-                i++;
+                // Skip the pipe (|) delimeter. The next four tokens represents the 4-digit output value.
+                for (int i = UNIQUE_SIGNAL_PATTERNS+1; i <= UNIQUE_SIGNAL_PATTERNS + OUTPUT_VALUE_DIGITS; i++) {
+                    outputValues.add(tokens[i]);
+                }
+
+                entries.add(new Entry(signalPatterns, outputValues));
             }
 
-            //int numUniqueSegmentDigits = countDigitsWithUniqueSegments(outputValues);
-            //System.out.println("The number of unique segment digits is: " + numUniqueSegmentDigits);
+            int part1 = part1(entries);
+            System.out.println("Part 1: " + part1);
 
-
-            int sumOfOutputDigits = determineOutputDigits(map);
-            System.out.println("The sum of output digits is: " + sumOfOutputDigits);
+            int part2 = part2(entries);
+            System.out.println("Part 2: " + part2);
         } catch (IOException exception) {
             exception.printStackTrace();
         }
     }
 
-    // Part 1: Returns the number of times digits that have a unique number of segments (i.e. 1, 4, 7, 8)
-    // occur in the input.
-    private static int countDigitsWithUniqueSegments(List<String> outputValues) {
-        int sum = 0;
+    // Part 1: Given a list of entries of the input file (each with ten unique signal patterns and a 4-digit
+    // output value), returns the number of times digits that have a unique number of segments occur in the entries.
+    // A "1" is made up of 2 segments. A "4" is made up of 4 segments. A "7" is made up of 3 segments"
+    // And a "8" is made up of 7 segments. There are the only digits which use a unique number of segments.
+    private static int part1(List<Entry> entries) {
+        int count = 0;
 
-        for (String value : outputValues) {
-            if (value.length() == NUM_SEGMENTS_ONE ||
-                    value.length() == NUM_SEGMENTS_FOUR ||
-                    value.length() == NUM_SEGMENTS_SEVEN ||
-                    value.length() == NUM_SEGMENTS_EIGHT) {
-                sum++;
+        for (Entry entry : entries) {
+            for (String value : entry.outputValues) {
+                if (value.length() == DIGIT_ONE_SEGMENTS ||
+                    value.length() == DIGIT_FOUR_SEGMENTS ||
+                    value.length() == DIGIT_SEVEN_SEGMENTS ||
+                    value.length() == DIGIT_EIGHT_SEGMENTS) {
+                    count++;
+                }
             }
         }
 
-        return sum;
+        return count;
+    }
+
+    // Returns true if s1 and s2 are anagrams of each other
+    private static boolean isAnagram(String s1, String s2) {
+        Map<Character, Integer> freq = new HashMap<>();
+
+        // Put all the characters of the first string into a map with their character count.
+        for (int i = 0; i < s1.length(); i++) {
+            char c = s1.charAt(i);
+
+            if (freq.containsKey(c)) {
+                freq.put(c, freq.get(c)+1);
+            } else {
+                freq.put(c, 1);
+            }
+        }
+
+        // Reduce the character count while iterating through the second string.
+        // If a character is encountered that isn't in s1, return false.
+        for (int i = 0; i < s2.length(); i++) {
+            char c = s2.charAt(i);
+            if (freq.containsKey(c)) {
+                freq.put(c, freq.get(c)-1);
+            } else {
+                return false;
+            }
+        }
+
+        // Finally, check if our map contains all 0s. If two strings are anagrams, its characters
+        // must appear the same number of times.
+        for (Integer i : freq.values()) {
+            if (i != 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Given a list of strings representing a four-digit number, use the digitPatterns mapping to
+    // return the int representation of the 4-digit number.
+    private static int determineOutputInts(List<String> outputValues, Map<String,Integer> digitPatterns) {
+        StringBuilder sb = new StringBuilder();
+
+        // For each string of the output values, convert it to a digit.
+        // If it has a length that is a unique digit, that is fairly easy.
+        // Otherwise, we compare the string to every pattern in our map to determine if two are anagrams
+        // of each other. Signal patterns may not have segments in the same order which is why anagram-checking
+        // is needed. If a match is found, we not down the digit associated with that pattern.
+        for (String digit : outputValues) {
+            if (digit.length() == DIGIT_ONE_SEGMENTS) {
+                sb.append(1);
+            } else if (digit.length() == DIGIT_FOUR_SEGMENTS) {
+                sb.append(4);
+            } else if (digit.length() == DIGIT_SEVEN_SEGMENTS) {
+                sb.append(7);
+            } else if (digit.length() == DIGIT_EIGHT_SEGMENTS) {
+                sb.append(8);
+            } else {
+                for (String pattern : digitPatterns.keySet()) {
+                    if (isAnagram(digit, pattern)) {
+                        sb.append(digitPatterns.get(pattern));
+                    }
+                }
+            }
+        }
+
+        return Integer.parseInt(sb.toString());
     }
 
     // Returns a string of characters that differ between the given strings
@@ -95,20 +152,18 @@ public class Day8_Seven_Segment_Search {
         return sb.toString();
     }
 
-    // A value of 3 has five segments and is the only five-segment digit that has the same
-    // segments as 1.
-    private static String determineValueThree(String[] signals) {
-        String one = "";
-        for (String signal : signals) {
-            if (signal.length() == NUM_SEGMENTS_ONE) {
-                one = signal;
-            }
+    // The digit 3 has five segments and is the only five-segment digit that shares the same segments as digit 1.
+    private static String determineDigitThree(List<String> fiveSegmentPatterns, Map<String,Integer> digitPatterns) {
+        String digitOnePattern = "";
+        for (Map.Entry<String, Integer> pair : digitPatterns.entrySet()) {
+            if (pair.getValue() == 1)
+                digitOnePattern = pair.getKey();
         }
 
-        for (String signal : signals) {
-            if (signal.length() == NUM_SEGMENTS_OTHER_FIVE &&
-                    signal.indexOf(one.charAt(0)) >= 0 &&
-                    signal.indexOf(one.charAt(1)) >= 0) {
+        // Find the pattern that contains the same segments as digit 1
+        for (String signal : fiveSegmentPatterns) {
+            if (signal.indexOf(digitOnePattern.charAt(0)) >= 0 && signal.indexOf(digitOnePattern.charAt(1)) >= 0) {
+                digitPatterns.put(signal, 3);
                 return signal;
             }
         }
@@ -116,30 +171,30 @@ public class Day8_Seven_Segment_Search {
         return "";
     }
 
-    // A value of 5 has five segments and is the only five-segment digit that shares the left and middle
-    // segments as a 4.
-    private static String determineValueFive(String[] signals) {
-        // First, find the signal for 1 (the one that has only 2 segments).
-        // Then, find the signal for 4 (the one that has only 4 segments).
+    // The digit 5 has five segments and is the only five-segment digit that shares the left and middle
+    // segments with digit 4.
+    private static String determineDigitFive(List<String> fiveSegmentPatterns, Map<String,Integer> digitPatterns) {
+        // First, find the pattern for 1 (the one that has exactly 2 segments).
+        // Then, find the pattern for 4 (the one that has exactly 4 segments).
         // By determining the unique segments between the two signals, that is the left and middle segment
         // which is only present in segments of length 5 which has to be a value of 5.
 
-        String one = "";
-        String four = "";
-        for (String signal : signals) {
-            if (signal.length() == NUM_SEGMENTS_ONE) {
-                one = signal;
-            } else if (signal.length() == NUM_SEGMENTS_FOUR) {
-                four = signal;
-            }
+        String digitOnePattern = "";
+        String digitFourPattern = "";
+        for (Map.Entry<String, Integer> pair : digitPatterns.entrySet()) {
+            if (pair.getValue() == 1)
+                digitOnePattern = pair.getKey();
+            else if (pair.getValue() == 4)
+                digitFourPattern = pair.getKey();
         }
 
-        String leftAndMiddle = findDifference(one, four);
+        String leftAndMiddleSegments = findDifference(digitOnePattern, digitFourPattern);
 
-        for (String signal : signals) {
-            if (signal.length() == NUM_SEGMENTS_OTHER_FIVE &&
-                    signal.indexOf(leftAndMiddle.charAt(0)) >= 0 &&
-                    signal.indexOf(leftAndMiddle.charAt(1)) >= 0) {
+        // Find the pattern that contains the same left and middle segments.
+        for (String signal : fiveSegmentPatterns) {
+            if (signal.indexOf(leftAndMiddleSegments.charAt(0)) >= 0 &&
+                signal.indexOf(leftAndMiddleSegments.charAt(1)) >= 0) {
+                digitPatterns.put(signal, 5);
                 return signal;
             }
         }
@@ -147,20 +202,19 @@ public class Day8_Seven_Segment_Search {
         return "";
     }
 
-    // A value of 6 has six segments and is the only six-segment digit that does NOT have
-    // the same segments as 1.
-    private static String determineValueSix(String[] signals) {
-        String one = "";
-        for (String signal : signals) {
-            if (signal.length() == NUM_SEGMENTS_ONE) {
-                one = signal;
-            }
+    // The digit 6 has six segments and is the only six-segment digit
+    // that does NOT have the same segments as digit 1.
+    private static String determineDigitSix(List<String> sixSegmentPatterns, Map<String,Integer> digitPatterns) {
+        String digitOnePattern = "";
+        for (Map.Entry<String, Integer> pair : digitPatterns.entrySet()) {
+            if (pair.getValue() == 1)
+                digitOnePattern = pair.getKey();
         }
 
-        for (String signal : signals) {
-            if (signal.length() == NUM_SEGMENTS_OTHER_SIX &&
-                    (signal.indexOf(one.charAt(0)) < 0 ||
-                            signal.indexOf(one.charAt(1)) < 0)) {
+        // Find the pattern that does NOT share the same segments as digit 1.
+        for (String signal : sixSegmentPatterns) {
+            if (signal.indexOf(digitOnePattern.charAt(0)) < 0 || signal.indexOf(digitOnePattern.charAt(1)) < 0) {
+                digitPatterns.put(signal, 6);
                 return signal;
             }
         }
@@ -168,21 +222,21 @@ public class Day8_Seven_Segment_Search {
         return "";
     }
 
-    // A value of 9 has six segments and is the only six-segment that fully contains the same segments as 4
-    private static String determineValueNine(String[] signals) {
-        String four = "";
-        for (String signal : signals) {
-            if (signal.length() == NUM_SEGMENTS_FOUR) {
-                four = signal;
-            }
+    // The digit 9 has six segments and is the only six-segment digit
+    // that fully contains the same segments as digit 4
+    private static String determineDigitNine(List<String> sixSegmentPatterns, Map<String,Integer> digitPatterns) {
+        String digitFourPattern = "";
+        for (Map.Entry<String, Integer> pair : digitPatterns.entrySet()) {
+            if (pair.getValue() == 4)
+                digitFourPattern = pair.getKey();
         }
 
-        for (String signal : signals) {
-            if (signal.length() == NUM_SEGMENTS_OTHER_SIX &&
-                    signal.indexOf(four.charAt(0)) >= 0 &&
-                    signal.indexOf(four.charAt(1)) >= 0 &&
-                    signal.indexOf(four.charAt(2)) >= 0 &&
-                    signal.indexOf(four.charAt(3)) >= 0) {
+        for (String signal : sixSegmentPatterns) {
+            if (signal.indexOf(digitFourPattern.charAt(0)) >= 0 &&
+                signal.indexOf(digitFourPattern.charAt(1)) >= 0 &&
+                signal.indexOf(digitFourPattern.charAt(2)) >= 0 &&
+                signal.indexOf(digitFourPattern.charAt(3)) >= 0) {
+                digitPatterns.put(signal, 9);
                 return signal;
             }
         }
@@ -190,126 +244,107 @@ public class Day8_Seven_Segment_Search {
         return "";
     }
 
-    // Given a string of characters and the characters that represent 0,2,3,5,6,9,
-    // returns the int representation of s.
-    private static int determineOtherSegmentValue(String s,
-                                                  String twoString, String threeString, String fiveString,
-                                                  String zeroString, String sixString, String nineString) {
-        char[] sArray = s.toCharArray();
-        Arrays.sort(sArray);
+    // Insert pattern-digit mappings for digits with five-segments (i.e. digits 2,3,5)
+    private static void populateFiveSegmentDigits(List<String> fiveSegmentPatterns, Map<String,Integer> digitPatterns) {
+        String digitThreePattern = determineDigitThree(fiveSegmentPatterns, digitPatterns);
+        String digitFivePattern = determineDigitFive(fiveSegmentPatterns, digitPatterns);
 
-        if (sArray.length == NUM_SEGMENTS_OTHER_FIVE) {
-            char[] twoArray = twoString.toCharArray();
-            char[] threeArray = threeString.toCharArray();
-            char[] fiveArray = fiveString.toCharArray();
-
-            Arrays.sort(twoArray);
-            Arrays.sort(threeArray);
-            Arrays.sort(fiveArray);
-
-            if (Arrays.equals(sArray, twoArray)) {
-                return 2;
-            } else if (Arrays.equals(sArray, threeArray)) {
-                return 3;
-            } else if (Arrays.equals(sArray, fiveArray)) {
-                return 5;
-            }
-        } else if (sArray.length == NUM_SEGMENTS_OTHER_SIX) {
-            char[] zeroArray = zeroString.toCharArray();
-            char[] sixArray = sixString.toCharArray();
-            char[] nineArray = nineString.toCharArray();
-
-            Arrays.sort(zeroArray);
-            Arrays.sort(sixArray);
-            Arrays.sort(nineArray);
-
-            if (Arrays.equals(sArray, zeroArray)) {
-                return 0;
-            } else if (Arrays.equals(sArray, sixArray)) {
-                return 6;
-            } else if (Arrays.equals(sArray, nineArray)) {
-                return 9;
+        // Once digits 3 and 5 are inserted into our patterns mapping,
+        // the remaining five-segment pattern string would be digit 2.
+        for (String pattern : fiveSegmentPatterns) {
+            if (!pattern.equals(digitThreePattern) && !pattern.equals(digitFivePattern)) {
+                digitPatterns.put(pattern, 2);
             }
         }
-
-        return -1;
     }
 
-    // Given an array of length 4 that represents a 4-digit number, returns the int representation of that
-    // 4-digit number
-    private static int determineOutputInts(
-            String[] outputs,
-            String twoString, String threeString, String fiveString,
-            String zeroString, String sixString, String nineString) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < outputs.length; i++) {
-            String s = outputs[i];
-            if (s.length() == NUM_SEGMENTS_ONE) {
-                sb.append(1);
-            } else if (s.length() == NUM_SEGMENTS_FOUR) {
-                sb.append(4);
-            } else if (s.length() == NUM_SEGMENTS_SEVEN) {
-                sb.append(7);
-            } else if (s.length() == NUM_SEGMENTS_EIGHT) {
-                sb.append(8);
-            } else {
-                int value = determineOtherSegmentValue(s, twoString, threeString, fiveString, zeroString, sixString, nineString);
-                sb.append(value);
+    // Insert pattern-digit mappings for digits with six-segments (i.e. digits 0,6,9)
+    private static void populateSixSegmentDigits(List<String> sixSegmentPatterns, Map<String,Integer> digitPatterns) {
+        String digitSixPattern = determineDigitSix(sixSegmentPatterns, digitPatterns);
+        String digitNinePattern = determineDigitNine(sixSegmentPatterns, digitPatterns);
+
+        // Once digits 6 and 9 are inserted into our patterns mapping,
+        // the remaining six-segment pattern string would be digit 0.
+        for (String pattern : sixSegmentPatterns) {
+            if (!pattern.equals(digitSixPattern) && !pattern.equals(digitNinePattern)) {
+                digitPatterns.put(pattern, 0);
             }
         }
-
-        return Integer.parseInt(sb.toString());
     }
 
-    // Part 2: Returns the sum of all the 4-digit numbers represented by a sequence of characters
-    private static int determineOutputDigits(Map<Integer, List<String[]>> map) {
-        // For each entry...
+    // Given a list of signal pattern strings and a dictionary mapping a signal pattern string
+    // to the digit it represents, insert four entries for the four digits with a unique number of segments.
+    private static void populateUniqueDigits(List<String> signalPatterns, Map<String,Integer> digitPatterns) {
+        for (String signal : signalPatterns) {
+            if (signal.length() == DIGIT_ONE_SEGMENTS) {
+                digitPatterns.put(signal, 1);
+            } else if (signal.length() == DIGIT_FOUR_SEGMENTS) {
+                digitPatterns.put(signal, 4);
+            } else if (signal.length() == DIGIT_SEVEN_SEGMENTS) {
+                digitPatterns.put(signal, 7);
+            } else if (signal.length() == DIGIT_EIGHT_SEGMENTS) {
+                digitPatterns.put(signal, 8);
+            }
+        }
+    }
+
+    // Given a list of signal pattern strings and a dictionary mapping a signal pattern string
+    // to the digit it represents, insert the remaining six entries.
+    private static void populateRemainingDigits(List<String> signalPatterns, Map<String,Integer> digitPatterns) {
+        // First, let's only consider the signal patterns with five segments.
+        List<String> fiveSegmentPatterns = signalPatterns
+                .stream()
+                .filter(s -> s.length() == 5)
+                .collect(Collectors.toList());
+
+        populateFiveSegmentDigits(fiveSegmentPatterns, digitPatterns);
+
+        // Finally, let's consider the signal patterns with six segments.
+        List<String> sixSegmentPatterns = signalPatterns
+                .stream()
+                .filter(s -> s.length() == 6)
+                .collect(Collectors.toList());
+
+        populateSixSegmentDigits(sixSegmentPatterns, digitPatterns);
+    }
+
+    // Part 2: Returns the sum of all the 4-digit output values given by the entries in the input list.
+    // We construct a mapping between a signal pattern and its associated digit. Digits with a unique number
+    // of segments (i.e. 1,4,7,8) are easy to associate. For digits with five and six segments, we have to
+    // compare and contrast their segments with that of other digits in order to determine association.
+    // Once the map is built, we use that to figure out each digit of the 4-digit output values and sum them all up.
+    private static int part2(List<Entry> entries) {
         int sum = 0;
-        for (Integer i : map.keySet()) {
-            String[] signals = map.get(i).get(0);
-            String[] outputs = map.get(i).get(1);
 
-            String[] fiveSegments = Arrays.stream(signals)
-                    .filter(x -> x.length() == NUM_SEGMENTS_OTHER_FIVE)
-                    .toArray(String[]::new);
+        // Iterate through each entry.
+        for (Entry entry : entries) {
+            List<String> signalPatterns = entry.signalPatterns;
 
-            // Strings of values with five segments (2, 3, 5)
-            String fiveString = determineValueFive(signals);
-            String threeString = determineValueThree(signals);
-            String twoString = "";
-            for (String fiveSegment : fiveSegments) {
-                if (!fiveSegment.equals(fiveString) && !fiveSegment.equals(threeString)) {
-                    twoString = fiveSegment;
-                }
-            }
+            // Maps a unique signal string to the digit that it represents.
+            Map<String, Integer> digitPatterns = new HashMap<>();
 
-            String[] sixSegments = Arrays.stream(signals)
-                    .filter(x -> x.length() == NUM_SEGMENTS_OTHER_SIX)
-                    .toArray(String[]::new);
+            // We know that signal strings of length 2,4,3,7 represent digits 1,4,7,8 respectively,
+            // so we add those to our map first.
+            populateUniqueDigits(signalPatterns, digitPatterns);
 
-            // Strings of values with six segments (0, 6, 9)
-            String sixString = determineValueSix(signals);
-            String nineString = determineValueNine(signals);
-            String zeroString = "";
+            // Add the non-unique digits to the map
+            populateRemainingDigits(signalPatterns, digitPatterns);
 
-            for (String sixSegment : sixSegments) {
-                if (!sixSegment.equals(sixString) && !sixSegment.equals(nineString)) {
-                    zeroString = sixSegment;
-                }
-            }
-
-            int outputInts = determineOutputInts(
-                    outputs,
-                    twoString,
-                    threeString,
-                    fiveString,
-                    zeroString,
-                    sixString,
-                    nineString);
-
-            sum += outputInts;
+            sum += determineOutputInts(entry.outputValues, digitPatterns);
         }
 
         return sum;
+    }
+
+    // Class representing an entry in the input file.
+    // Associates the ten unique signal patterns
+    static class Entry {
+        List<String> signalPatterns;
+        List<String> outputValues;
+
+        public Entry(List<String> signalPatterns, List<String> outputValues) {
+            this.signalPatterns = signalPatterns;
+            this.outputValues = outputValues;
+        }
     }
 }
