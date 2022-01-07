@@ -2,7 +2,9 @@
 
 This repository contains my work for Advent of Code 2021. Advent of Code is an online event of 25 programming puzzles that helps people hone their problem-solving skills. There are 25 problems, each containing two parts (except for Day 25 which only contains one part).
 
-All the code is written in Java. Each Java file contains the solutions for both parts of the problem. Part 1 runs the function `part1` and Part 2 runs the function `part2`. Even if Part 2 happens to build upon the solution for Part 1, both functions remain separate so that the Part 1 solution can stand on its own.
+All the code is written in Java.
+
+Each Java file contains some initial logic for reading and parsing the input into appropriate data structures and then executes the algorithms for to solve both parts of the problem. The function `part1` solves part 1 of the problem and the function `part2` solves part 2 of the problem.
 
 Problem descriptions can be found here:
 
