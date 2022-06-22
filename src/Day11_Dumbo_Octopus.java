@@ -8,9 +8,12 @@ public class Day11_Dumbo_Octopus {
     public static void main(String[] args) {
         File file = new File("./inputs/day11/day11.txt");
 
-        int width = 10;
+        int width = 10; // hardcoded here but ideally dynamically determined
         int height = 10;
-        int[][] grid = new int[width][height];
+
+        // Need two instances of the starting grid. One for part 1 and one for part 2.
+        int[][] gridPart1 = new int[width][height];
+        int[][] gridPart2 = new int[width][height];
 
         try {
             Scanner sc = new Scanner(file);
@@ -21,17 +24,18 @@ public class Day11_Dumbo_Octopus {
                 for (int i = 0; i < line.length(); i++) {
                     char c = line.charAt(i);
                     int intValue = c - '0';
-                    grid[row][i] = intValue;
+                    gridPart1[row][i] = intValue;
+                    gridPart2[row][i] = intValue;
                 }
 
                 row++;
             }
 
-            //int flashes = getNumberOctopusFlashes(grid, 100);
-            //System.out.println("The answer is: " + flashes);
+            int part1 = part1(gridPart1, 100);
+            System.out.println("Part 1: " + part1);
 
-            int syncStep = getOctopusSynchronizationStep(grid);
-            System.out.println("The answer is: " + syncStep);
+            int part2 = part2(gridPart2);
+            System.out.println("Part 2: " + part2);
 
         } catch (IOException exception) {
             exception.printStackTrace();
@@ -39,7 +43,7 @@ public class Day11_Dumbo_Octopus {
     }
 
     // Increases all energy levels of octopus in the grid by 1 and
-    // returns a queue of the points in which the octopus level is greater than 9
+    // returns a list of the points in which the octopus energy level is greater than 9.
     private static List<Point> increaseEnergyLevelByOne(int[][] grid) {
         List<Point> octopusesReady = new LinkedList<>();
         for (int i = 0; i < grid.length; i++) {
@@ -54,16 +58,6 @@ public class Day11_Dumbo_Octopus {
 
         return octopusesReady;
     }
-
-    private static void setFlashedOctopusesEnergyToZero(int[][] grid) {
-        for (int i = 0; i < grid.length; i++) {
-            for (int j = 0; j < grid[i].length; j++) {
-                if (grid[i][j] > 9)
-                    grid[i][j] = 0;
-            }
-        }
-    }
-
 
     // Given a point on the grid, returns all adjacent neighbors (including diagonally adjacent)
     private static List<Point> getNeighbors(int[][] grid, Point p) {
@@ -133,7 +127,7 @@ public class Day11_Dumbo_Octopus {
 
     // Part 1: For each step of the octopus flash sequence, runs a BFS on any points
     // where the octopus level exceeds 9. Returns the number of flashes that occur.
-    private static int getNumberOctopusFlashes(int[][] grid, int step) {
+    private static int part1(int[][] grid, int step) {
         int flashes = 0;
         LinkedList<Point> queue = new LinkedList<>();
         Set<Point> visited = new HashSet<>();
@@ -198,7 +192,7 @@ public class Day11_Dumbo_Octopus {
 
     // Part 2: Same algorithm as part 1. The only difference is that this runs until we hit
     // a grid state where all levels are set to 0. Returns the step number when this happens.
-    private static int getOctopusSynchronizationStep(int[][] grid) {
+    private static int part2(int[][] grid) {
         int step = 1;
         LinkedList<Point> queue = new LinkedList<>();
         Set<Point> visited = new HashSet<>();
